@@ -110883,7 +110883,7 @@ function buildRunCommands(githubRegistrationToken, label) {
       // Remove stale runner config from AMI so config.sh doesn't refuse to run
       'rm -f .runner .credentials .credentials_rsaparams',
       dbg(`echo "[RUNNER] Configuring runner with label: ${label}, name: ec2-${label}"`),
-      `./config.sh --unattended --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --name ec2-${label} --replace`,
+      `./config.sh --unattended --url https://github.com/${config.githubContext.org} --token ${githubRegistrationToken} --labels ${label} --name ec2-${label} --replace`,
       dbg('echo "[RUNNER] config.sh completed successfully"'),
     ].filter(Boolean);
   } else {
@@ -110909,7 +110909,7 @@ function buildRunCommands(githubRegistrationToken, label) {
       dbg('echo "[RUNNER] Extraction complete. Directory contents:" && ls -la'),
       'export RUNNER_ALLOW_RUNASROOT=1',
       dbg(`echo "[RUNNER] Configuring runner with label: ${label}, name: ec2-${label}"`),
-      `./config.sh --unattended --url https://github.com/${config.githubContext.owner}/${config.githubContext.repo} --token ${githubRegistrationToken} --labels ${label} --name ec2-${label} --replace`,
+      `./config.sh --unattended --url https://github.com/${config.githubContext.org} --token ${githubRegistrationToken} --labels ${label} --name ec2-${label} --replace`,
       dbg('echo "[RUNNER] config.sh completed successfully"'),
     ].filter(Boolean);
   }
@@ -111279,12 +111279,12 @@ class Config {
       ];
     }
 
-    // the values of github.context.repo.owner and github.context.repo.repo are taken from
-    // the environment variable GITHUB_REPOSITORY specified in "owner/repo" format and
-    // provided by the GitHub Action on the runtime
+    // runners are registered on the organization level, so the token only needs the
+    // organization "Self-hosted runners" permission instead of repository "Administration".
+    // The organization is the owner of the current repository, taken from the
+    // GITHUB_REPOSITORY environment variable ("owner/repo") provided by GitHub Actions
     this.githubContext = {
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
+      org: github.context.repo.owner,
     };
 
     //
@@ -111411,7 +111411,7 @@ async function getRunner(label) {
   const octokit = github.getOctokit(config.input.githubToken);
 
   try {
-    const runners = await octokit.paginate('GET /repos/{owner}/{repo}/actions/runners', config.githubContext);
+    const runners = await octokit.paginate('GET /orgs/{org}/actions/runners', config.githubContext);
     const foundRunners = _.filter(runners, { labels: [{ name: label }] });
     return foundRunners.length > 0 ? foundRunners[0] : null;
   } catch (error) {
@@ -111424,7 +111424,7 @@ async function getRegistrationToken() {
   const octokit = github.getOctokit(config.input.githubToken);
 
   try {
-    const response = await octokit.request('POST /repos/{owner}/{repo}/actions/runners/registration-token', config.githubContext);
+    const response = await octokit.request('POST /orgs/{org}/actions/runners/registration-token', config.githubContext);
     core.info('GitHub Registration Token is received');
     return response.data.token;
   } catch (error) {
@@ -111439,7 +111439,7 @@ async function getJitRunnerConfig(label) {
 
   try {
     const response = await octokit.request(
-      'POST /repos/{owner}/{repo}/actions/runners/generate-jitconfig',
+      'POST /orgs/{org}/actions/runners/generate-jitconfig',
       {
         ...config.githubContext,
         name: `ec2-${label}`,
@@ -111471,7 +111471,7 @@ async function removeRunner() {
   }
 
   try {
-    await octokit.request('DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}', _.merge(config.githubContext, { runner_id: runner.id }));
+    await octokit.request('DELETE /orgs/{org}/actions/runners/{runner_id}', { ...config.githubContext, runner_id: runner.id });
     core.info(`GitHub self-hosted runner ${runner.name} is removed`);
     return;
   } catch (error) {

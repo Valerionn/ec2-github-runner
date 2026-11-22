@@ -45,12 +45,12 @@ class Config {
       ];
     }
 
-    // the values of github.context.repo.owner and github.context.repo.repo are taken from
-    // the environment variable GITHUB_REPOSITORY specified in "owner/repo" format and
-    // provided by the GitHub Action on the runtime
+    // runners are registered on the organization level, so the token only needs the
+    // organization "Self-hosted runners" permission instead of repository "Administration".
+    // The organization is the owner of the current repository, taken from the
+    // GITHUB_REPOSITORY environment variable ("owner/repo") provided by GitHub Actions
     this.githubContext = {
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
+      org: github.context.repo.owner,
     };
 
     //

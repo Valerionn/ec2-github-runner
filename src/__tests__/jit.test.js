@@ -149,10 +149,9 @@ describe('gh.js - getJitRunnerConfig', () => {
     const result = await gh.getJitRunnerConfig('abc12');
 
     expect(mockRequest).toHaveBeenCalledWith(
-      'POST /repos/{owner}/{repo}/actions/runners/generate-jitconfig',
+      'POST /orgs/{org}/actions/runners/generate-jitconfig',
       expect.objectContaining({
-        owner: 'test-owner',
-        repo: 'test-repo',
+        org: 'test-owner',
         name: 'ec2-abc12',
         runner_group_id: 1,
         labels: ['abc12'],

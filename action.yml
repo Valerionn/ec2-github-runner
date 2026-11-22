@@ -13,7 +13,9 @@ inputs:
     required: true
   github-token:
     description: >-
-      GitHub Personal Access Token with the 'repo' scope assigned.
+      GitHub Personal Access Token used to manage self-hosted runners on the organization level.
+      A fine-grained token needs the organization permission 'Self-hosted runners: Read and write';
+      a classic token needs the 'admin:org' scope.
     required: true
   availability-zones-config:
     description: >-
@@ -146,7 +148,7 @@ inputs:
   runner-group-id:
     description: >-
       The ID of the runner group to register the JIT runner in.
-      Defaults to 1, which is the "Default" runner group for repository-level runners.
+      Defaults to 1, which is the "Default" runner group of the organization.
       Only used when 'use-jit' is true.
     required: false
     default: '1'

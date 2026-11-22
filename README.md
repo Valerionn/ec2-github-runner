@@ -1,5 +1,7 @@
 # On-demand self-hosted AWS EC2 runner for GitHub Actions
 
+This fork uses organization-registered runners instead of repo-level so the token doesn't need administration permission.
+
 ⚠️ If you like the project, please consider [supporting Ukraine](https://prytulafoundation.org/en) in a [war](https://en.wikipedia.org/wiki/Russian_invasion_of_Ukraine) against russian occupants. Any help would be much appreciated!
 
 [<img src="https://user-images.githubusercontent.com/2857712/156607570-8c9fd15b-8b44-41b3-bec3-312267af324f.png" width="500">](https://supportukrainenow.org)
@@ -176,8 +178,10 @@ Use the following steps to prepare your workflow for running on your EC2 self-ho
 
 **2. Prepare GitHub personal access token**
 
-1. Create a new GitHub personal access token with the `repo` scope.
-   The action will use the token for self-hosted runners management in the GitHub account on the repository level.
+1. Create a new fine-grained GitHub personal access token with the resource owner set to your organization and the organization permission **Self-hosted runners: Read and write**. No repository permissions are needed.
+   (A classic token with the `admin:org` scope also works.)
+   The action will use the token for self-hosted runners management on the **organization** level, so runners are registered for the organization rather than for a single repository.
+   Make sure the runner group the runner is registered in (the `Default` group unless you set `runner-group-id` for JIT runners) allows the repository running the workflow to use it.
 2. Add the token to GitHub secrets.
 
 **3. Prepare EC2 image**
@@ -235,7 +239,7 @@ Now you're ready to go!
 | Name | Required | Description |
 | --- | --- | --- |
 | `mode` | Always required. | Specify here which mode you want to use: <br> - `start` - to start a new runner; <br> - `stop` - to stop the previously created runner. |
-| `github-token` | Always required. | GitHub Personal Access Token with the `repo` scope assigned. |
+| `github-token` | Always required. | GitHub Personal Access Token with the organization permission `Self-hosted runners: Read and write` (fine-grained) or the `admin:org` scope (classic). |
 | `ec2-image-id` | Required if you use the `start` mode and don't provide `availability-zones-config`. | EC2 Image Id (AMI). The new runner will be launched from this image. Compatible with Amazon Linux 2, Amazon Linux 2023, and Ubuntu images. |
 | `ec2-instance-type` | Required if you use the `start` mode. | EC2 Instance Type. |
 | `subnet-id` | Required if you use the `start` mode and don't provide `availability-zones-config`. | VPC Subnet Id. The subnet should belong to the same VPC as the specified security group. |
